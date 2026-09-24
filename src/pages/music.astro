@@ -1,0 +1,85 @@
+---
+import Layout from "../layouts/Layout.astro";
+import BackLink from "../components/BackLink.astro";
+import rawMusicData from "../data/music.json";
+
+interface Song {
+	name: string;
+	artist: string;
+	album?: string;
+	favoriteLyrics: string[];
+	url: string;
+	image: string;
+}
+
+const songs = rawMusicData as Song[];
+const eligibleSongs = songs.filter((s) => s.image && s.favoriteLyrics?.length > 0);
+
+const bangkokDay = Math.floor((Date.now() + 7 * 36e5) / 864e5);
+const dailySongIndex = eligibleSongs.length > 0 ? bangkokDay % eligibleSongs.length : 0;
+const defaultSong = eligibleSongs[dailySongIndex] || songs[0];
+const defaultLyric = defaultSong?.favoriteLyrics?.[0] || "";
+---
+
+<Layout
+	title="chawinkn - music"
+	description="Music and favorite lyrics collected by Chawin Chaisongkram (Kanoon)."
+>
+	<section class="my-10 space-y-8">
+		<div>
+			<BackLink />
+			<h2 class="text-xl md:text-2xl font-semibold tracking-tight">
+				Music / เพลง
+			</h2>
+		</div>
+
+		{defaultSong?.image && (
+			<figure class="space-y-3">
+				<div class="w-full aspect-[16/9] sm:aspect-[2/1] overflow-hidden bg-surface-muted">
+					<img
+						id="random-cover-img"
+						src={defaultSong.image}
+						alt={defaultLyric}
+						class="w-full h-full object-cover"
+						referrerpolicy="no-referrer"
+						loading="eager"
+					/>
+				</div>
+
+				{defaultLyric && (
+					<figcaption class="flex justify-end pt-1">
+						<blockquote
+							id="random-lyric-text"
+							class="font-serif italic font-normal text-xl md:text-2xl text-foreground text-right whitespace-pre-line max-w-prose leading-relaxed"
+						>
+							“{defaultLyric}”
+						</blockquote>
+					</figcaption>
+				)}
+			</figure>
+		)}
+	</section>
+
+	<script is:inline define:vars={{ eligibleSongs }}>
+		if (eligibleSongs && eligibleSongs.length > 0) {
+			const bangkokDay = Math.floor((Date.now() + 7 * 36e5) / 864e5);
+			const dailySong = eligibleSongs[bangkokDay % eligibleSongs.length];
+
+			if (dailySong && dailySong.favoriteLyrics && dailySong.favoriteLyrics.length > 0) {
+				const lyrics = dailySong.favoriteLyrics;
+				const randomLyric = lyrics[Math.floor(Math.random() * lyrics.length)];
+
+				const imgEl = document.getElementById("random-cover-img");
+				const lyricEl = document.getElementById("random-lyric-text");
+
+				if (imgEl && dailySong.image) {
+					imgEl.src = dailySong.image;
+					imgEl.alt = randomLyric;
+				}
+				if (lyricEl && randomLyric) {
+					lyricEl.textContent = `“${randomLyric}”`;
+				}
+			}
+		}
+	</script>
+</Layout>

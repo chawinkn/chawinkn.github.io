@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Self Control",
+    "artist": "Frank Ocean",
+    "album": "Blonde",
+    "favoriteLyrics": [
+      "Sometimes you'll miss it\nAnd the sound will make you cry\nAnd some nights you're dancing\nWith tears in your eyes"
+    ],
+    "url": "https://www.youtube.com/watch?v=OxMLCkWm6Dc",
+    "image": "https://i3.ytimg.com/vi/OxMLCkWm6Dc/maxresdefault.jpg"
+  },
+  {
+    "name": "Dear April",
+    "artist": "Frank Ocean",
+    "album": "Side A - Acoustic",
+    "favoriteLyrics": [
+      "If you could take two strangers\nLeanin' them left and right\nAt a certain place and time",
+      "You made me new\nYou took me through\nYou woke me up (woke me up)",
+      "And what we had can't be the same now (now)\nBut you will make something\nIt'll take you through\nIt'll wake you up again"
+    ],
+    "url": "https://www.youtube.com/watch?v=pvU4b4N1-QU",
+    "image": "https://i3.ytimg.com/vi/pvU4b4N1-QU/maxresdefault.jpg"
+  }
+]
