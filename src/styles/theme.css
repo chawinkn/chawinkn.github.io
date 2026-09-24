@@ -1,0 +1,155 @@
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+
+  --surface: #ffffff;
+  --surface-muted: #f4f4f5;
+  --surface-subtle: #f9f9fa;
+
+  --muted: #71717a;
+  --muted-foreground: #71717a;
+  --subtle: #a1a1aa;
+
+  --border: #e4e4e7;
+  --border-strong: #09090b;
+  --border-subtle: #f1f1f3;
+
+  --primary: #09090b;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+
+  --code-background: #f4f4f6;
+  --code-border: #e4e4e7;
+  --code-foreground: #09090b;
+
+  --selection-background: #09090b;
+  --selection-foreground: #ffffff;
+
+  --font-serif: "Newsreader", "IBM Plex Serif Thai", "Noto Serif Thai", Georgia, Cambria, "Times New Roman", "Thonburi", serif;
+  --font-sans: "Inter", "IBM Plex Sans Thai", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-thai: "IBM Plex Serif Thai", "Noto Serif Thai", "IBM Plex Sans Thai", "Thonburi", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --container-prose: 68ch;
+  --container-content: 820px;
+  --container-wide: 1120px;
+}
+
+@theme {
+  --default-font-family: var(--font-serif);
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-thai: var(--font-thai);
+  --font-mono: var(--font-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-subtle: var(--surface-subtle);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-code-background: var(--code-background);
+  --color-code-border: var(--code-border);
+  --color-code-foreground: var(--code-foreground);
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+  font-family: var(--font-serif);
+  background-color: var(--background);
+  color: var(--foreground);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-serif);
+  line-height: 1.7;
+}
+
+::selection {
+  background-color: var(--selection-background);
+  color: var(--selection-foreground);
+}
+
+:lang(th),
+[lang="th"],
+.font-thai {
+  font-family: var(--font-serif);
+  line-height: 1.8;
+  letter-spacing: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+:lang(th) h1,
+:lang(th) h2,
+:lang(th) h3,
+:lang(th) h4,
+.font-thai h1,
+.font-thai h2,
+.font-thai h3,
+.font-thai h4 {
+  font-family: var(--font-serif);
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+:lang(en) h1,
+:lang(en) h2,
+:lang(en) h3,
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
+}
+
+.container-prose {
+  width: 100%;
+  max-width: var(--container-prose);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.container-content {
+  width: 100%;
+  max-width: var(--container-content);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.container-wide {
+  width: 100%;
+  max-width: var(--container-wide);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
