@@ -1,0 +1,211 @@
+---
+interface Props {
+  images: { src: string; alt?: string }[];
+  alt: string;
+}
+
+const { images, alt } = Astro.props;
+const multiple = images.length > 1;
+const circle =
+  "absolute size-7 md:size-8 flex items-center justify-center rounded-full bg-foreground/50 font-mono text-base text-background hover:bg-foreground/70 cursor-pointer";
+const arrow = `${circle} top-1/2 -translate-y-1/2`;
+const counter = `absolute rounded-full bg-foreground/50 font-mono text-background px-2.5 py-0.5 text-xs left-1/2 -translate-x-1/2 pointer-events-none`;
+---
+
+<div
+  data-slider
+  tabindex={multiple ? 0 : undefined}
+  class="relative border border-border bg-surface-muted focus-visible:outline focus-visible:outline-1 focus-visible:outline-foreground"
+>
+  <div
+    data-track
+    class="flex min-h-48 max-h-[28rem] overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  >
+    {images.map((img) => (
+      <img
+        src={img.src}
+        alt={img.alt ?? alt}
+        class="w-full shrink-0 snap-center object-contain cursor-zoom-in"
+      />
+    ))}
+  </div>
+  {multiple && (
+    <>
+      <button data-prev aria-label="Previous image" class={`${arrow} left-2`}>
+        &lt;
+      </button>
+      <button data-next aria-label="Next image" class={`${arrow} right-2`}>
+        &gt;
+      </button>
+      <span data-count class={`${counter} bottom-2`}>
+        1 / {images.length}
+      </span>
+    </>
+  )}
+  <dialog
+    data-zoom
+    class="m-0 h-dvh w-dvw max-h-none max-w-none overflow-hidden bg-transparent p-0 backdrop:bg-foreground/90"
+  >
+    <img
+      data-zoom-img
+      alt=""
+      draggable="false"
+      class="h-full w-full touch-none select-none object-contain px-14 py-12 md:px-16"
+    />
+    {multiple && (
+      <>
+        <button data-zoom-prev aria-label="Previous image" class={`${arrow} left-4`}>
+          &lt;
+        </button>
+        <button data-zoom-next aria-label="Next image" class={`${arrow} right-4`}>
+          &gt;
+        </button>
+        <span data-zoom-count class={`${counter} bottom-4`}>
+          1 / {images.length}
+        </span>
+      </>
+    )}
+  </dialog>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-slider]").forEach((root) => {
+    const track = root.querySelector<HTMLElement>("[data-track]")!;
+    const zoom = root.querySelector<HTMLDialogElement>("[data-zoom]")!;
+    const zoomImg = zoom.querySelector<HTMLImageElement>("[data-zoom-img]")!;
+    const count = root.querySelector("[data-count]");
+    const zoomCount = zoom.querySelector("[data-zoom-count]");
+    const imgs = [...track.querySelectorAll("img")];
+    const total = imgs.length;
+    const wrap = (i: number) => (i + total) % total;
+    const index = () => Math.round(track.scrollLeft / track.clientWidth);
+    const go = (i: number) =>
+      track.scrollTo({ left: wrap(i) * track.clientWidth, behavior: "smooth" });
+
+    let scale = 1;
+    let tx = 0;
+    let ty = 0;
+    const apply = () => {
+      const mx = (zoomImg.clientWidth * (scale - 1)) / 2;
+      const my = (zoomImg.clientHeight * (scale - 1)) / 2;
+      tx = Math.min(mx, Math.max(-mx, tx));
+      ty = Math.min(my, Math.max(-my, ty));
+      zoomImg.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      zoomImg.style.cursor = scale > 1 ? "grab" : "zoom-in";
+    };
+    const zoomAt = (next: number, clientX: number, clientY: number) => {
+      const r = zoom.getBoundingClientRect();
+      const cx = clientX - (r.left + r.width / 2);
+      const cy = clientY - (r.top + r.height / 2);
+      next = Math.min(6, Math.max(1, next));
+      tx = cx - ((cx - tx) * next) / scale;
+      ty = cy - ((cy - ty) * next) / scale;
+      scale = next;
+      apply();
+    };
+    const resetZoom = () => {
+      scale = 1;
+      tx = ty = 0;
+      apply();
+    };
+
+    const pointers = new Map<number, { x: number; y: number }>();
+    let pinch = { dist: 0, scale: 1 };
+    let moved = false;
+    let start = { x: 0, y: 0 };
+    const distance = () => {
+      const [a, b] = [...pointers.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
+
+    zoomImg.addEventListener("pointerdown", (e) => {
+      zoomImg.setPointerCapture(e.pointerId);
+      moved = pointers.size > 0;
+      start = { x: e.clientX, y: e.clientY };
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) pinch = { dist: distance(), scale };
+    });
+    zoomImg.addEventListener("pointermove", (e) => {
+      const p = pointers.get(e.pointerId);
+      if (!p) return;
+      if (pointers.size === 2 || scale > 1) moved = true;
+      if (pointers.size === 2) {
+        p.x = e.clientX;
+        p.y = e.clientY;
+        const [a, b] = [...pointers.values()];
+        zoomAt((pinch.scale * distance()) / pinch.dist, (a.x + b.x) / 2, (a.y + b.y) / 2);
+      } else if (scale > 1) {
+        tx += e.clientX - p.x;
+        ty += e.clientY - p.y;
+        p.x = e.clientX;
+        p.y = e.clientY;
+        apply();
+      }
+    });
+    const release = (e: PointerEvent) => {
+      const single = pointers.size === 1;
+      pointers.delete(e.pointerId);
+      if (e.type !== "pointerup" || !single || moved || scale > 1) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (Math.hypot(dx, dy) < 8) return;
+      moved = true;
+      if (
+        e.pointerType !== "mouse" &&
+        total > 1 &&
+        Math.abs(dx) > 50 &&
+        Math.abs(dx) > Math.abs(dy) * 1.5
+      )
+        show(zoomed + (dx < 0 ? 1 : -1));
+    };
+    zoomImg.addEventListener("pointerup", release);
+    zoomImg.addEventListener("pointercancel", release);
+    zoomImg.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        zoomAt(scale * Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY);
+      },
+      { passive: false }
+    );
+
+    let zoomed = 0;
+    const show = (i: number) => {
+      resetZoom();
+      zoomed = wrap(i);
+      zoomImg.src = imgs[zoomed].src;
+      zoomImg.alt = imgs[zoomed].alt;
+      if (zoomCount) zoomCount.textContent = `${zoomed + 1} / ${total}`;
+    };
+
+    track.addEventListener("scroll", () => {
+      if (count) count.textContent = `${index() + 1} / ${total}`;
+    });
+    root.querySelector("[data-prev]")?.addEventListener("click", () => go(index() - 1));
+    root.querySelector("[data-next]")?.addEventListener("click", () => go(index() + 1));
+    const onArrows = (e: KeyboardEvent, step: (d: number) => void) => {
+      if (e.key === "ArrowLeft") step(-1);
+      if (e.key === "ArrowRight") step(1);
+    };
+    root.addEventListener("keydown", (e) => {
+      if (!zoom.open) onArrows(e, (d) => go(index() + d));
+    });
+
+    track.addEventListener("click", (e) => {
+      if (!(e.target instanceof HTMLImageElement)) return;
+      show(imgs.indexOf(e.target));
+      zoom.showModal();
+    });
+    zoom.querySelector("[data-zoom-prev]")?.addEventListener("click", () => show(zoomed - 1));
+    zoom.querySelector("[data-zoom-next]")?.addEventListener("click", () => show(zoomed + 1));
+    zoom.addEventListener("keydown", (e) => onArrows(e, (d) => show(zoomed + d)));
+    zoom.addEventListener("click", (e) => {
+      if (moved || (e.target !== zoom && e.target !== zoomImg)) return;
+      if (scale > 1) resetZoom();
+      else zoom.close();
+    });
+    zoom.addEventListener("close", () =>
+      track.scrollTo({ left: zoomed * track.clientWidth, behavior: "instant" })
+    );
+  });
+</script>
