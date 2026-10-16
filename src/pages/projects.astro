@@ -1,0 +1,61 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ImageSlider from "../components/ImageSlider.astro";
+import { marked } from "marked";
+import rawProjects from "../data/projects.json";
+---
+
+<Layout
+  title="projects"
+  description="Selected projects by Chawin Chaisongkram (Kanoon): web apps, backend services, and tools."
+>
+  <section class="my-10 space-y-8">
+    <div>
+      <h2 class="text-xl md:text-2xl font-semibold tracking-tight mb-2">Projects</h2>
+      <p class="text-muted text-sm font-mono">a collection of things I've done/working with</p>
+    </div>
+
+    <ul class="space-y-12">
+      {rawProjects.map((p) => (
+        <li class="space-y-4">
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <div>
+              <h3 class="font-serif italic font-semibold text-xl md:text-2xl text-foreground leading-normal">
+                {p.url ? (
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="underline underline-offset-4 hover:opacity-70"
+                  >
+                    {p.name}
+                  </a>
+                ) : (
+                  p.name
+                )}
+              </h3>
+              <p class="font-mono text-sm text-foreground mt-0.5">{p.context}</p>
+            </div>
+            <span class="font-mono text-sm text-foreground">{p.period}</span>
+          </div>
+          <div
+            class="text-base md:text-lg leading-relaxed text-foreground space-y-3 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:pl-1"
+            set:html={marked.parse(p.description, { async: false })}
+          />
+          {p.github && (
+            <a
+              href={p.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block w-fit font-mono text-sm text-foreground underline underline-offset-4 hover:opacity-70"
+            >
+              -&gt; github
+            </a>
+          )}
+          {p.images?.length ? <ImageSlider images={p.images} alt={p.name} /> : null}
+          <p class="font-mono text-sm text-muted">{p.stack.join(" · ")}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Layout>
