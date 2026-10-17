@@ -12,7 +12,7 @@ import rawProjects from "../data/projects.json";
   <section class="my-10 space-y-8">
     <div>
       <h2 class="text-xl md:text-2xl font-semibold tracking-tight mb-2">Projects</h2>
-      <p class="text-muted text-sm font-mono">a collection of things I've done/working with</p>
+      <p class="text-muted text-sm font-mono">a collection of things I've done and am working on</p>
     </div>
 
     <ul class="space-y-12">
@@ -34,7 +34,7 @@ import rawProjects from "../data/projects.json";
                   p.name
                 )}
               </h3>
-              <p class="font-mono text-sm text-foreground mt-0.5">{p.context}</p>
+              {p.context && <p class="font-mono text-sm text-foreground mt-0.5">{p.context}</p>}
             </div>
             <span class="font-mono text-sm text-foreground">{p.period}</span>
           </div>
@@ -42,6 +42,7 @@ import rawProjects from "../data/projects.json";
             class="text-base md:text-lg leading-relaxed text-foreground space-y-3 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:pl-1"
             set:html={marked.parse(p.description, { async: false })}
           />
+          <p class="font-mono text-sm text-muted">{p.stack.join(" · ")}</p>
           {p.github && (
             <a
               href={p.github}
@@ -52,8 +53,7 @@ import rawProjects from "../data/projects.json";
               -&gt; github
             </a>
           )}
-          {p.images?.length ? <ImageSlider images={p.images} alt={p.name} /> : null}
-          <p class="font-mono text-sm text-muted">{p.stack.join(" · ")}</p>
+          {p.images && <ImageSlider images={p.images} />}
         </li>
       ))}
     </ul>

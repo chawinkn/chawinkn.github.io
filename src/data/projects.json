@@ -3,50 +3,170 @@
     "name": "ESC Finance Tracker",
     "context": "Engineering Student Committee, Chulalongkorn University",
     "period": "Aug 2026 – Present",
-    "description": "Internal finance tracker with dashboard interfaces and charts for financial data.",
-    "stack": ["Next.js"],
+    "description": "Internal finance tracker for the Engineering Student Committee.\n\n- Dashboard interfaces\n- Charting components for financial data",
+    "stack": ["Next.js", "Go", "MongoDB"],
     "github": "https://github.com/esc-chula/esc-project-tracker-refresh-fe",
     "images": [
       {
-        "src": "/projects/esc-tracker-home.png"
+        "src": "/projects/esc-tracker-home.png",
+        "caption": "Home page with recent projects and a table of recent documents with status labels"
       },
       {
-        "src": "/projects/esc-tracker-projects.png"
+        "src": "/projects/esc-tracker-projects.png",
+        "caption": "Project page with deadlines, a document table and a budget donut chart"
       },
       {
-        "src": "/projects/esc-tracker-status.png"
+        "src": "/projects/esc-tracker-documents.png",
+        "caption": "Document detail page with a five-step progress tracker, bill upload area and message history"
       },
       {
-        "src": "/projects/esc-tracker-documents.png"
-      },
-      {
-        "src": "/projects/esc-tracker-summary.png"
+        "src": "/projects/esc-tracker-summary.png",
+        "caption": "Budget summary page with a donut chart and a table of projects"
       }
     ]
   },
   {
-    "name": "CU First Date & RPKM 2026 (Backend)",
+    "name": "CU First Date & RPKM 2026",
     "context": "Information System Development (ISD), Chulalongkorn University",
-    "period": "Jun 2026 – Aug 2026",
-    "description": "One backend for CU First Date 2026 and Rub Phuean Kao Mai 2569 (รับเพื่อนก้าวใหม่), merging two earlier services behind a shared API host. Chula SSO login via Google OAuth.",
-    "stack": ["Bun", "Elysia", "TypeScript", "Drizzle", "PostgreSQL"],
-    "github": "https://github.com/isd-sgcu/fdrpkm2026-backend"
+    "period": "Jul 2026",
+    "description": "Web app for the CU First Date and Rub Phuean Kao Mai 2026 freshmen events.\n\n- Designed the APIs and led the backend team through sprints and code reviews\n- Google OAuth sign-in with Better Auth\n- Onboarding & registration, house selection and QR check-in APIs\n- Event activity APIs: Chula Jigsaw Journey, QR Quest and Walk Rally",
+    "stack": ["Bun", "Elysia", "TypeScript", "Drizzle", "Better Auth", "PostgreSQL"],
+    "github": "https://github.com/isd-sgcu/fdrpkm2026-backend",
+    "images": [
+      {
+        "src": "/projects/fdrpkm69-1.png",
+        "caption": "CU First Date 2026 registration form"
+      },
+      {
+        "src": "/projects/fdrpkm69-2.png",
+        "caption": "CU First Date 2026 staff check-in screen with a QR code scanner and a student ID option"
+      },
+      {
+        "src": "/projects/fdrpkm69-3.png",
+        "caption": "CU RPKM 2026 Chula Jigsaw Journey game showing the collected puzzle pieces and a scan button"
+      },
+      {
+        "src": "/projects/fdrpkm69-4.png",
+        "caption": "CU RPKM 2026 QR Quest game with a map of featured shops and a scan-to-collect button"
+      },
+      {
+        "src": "/projects/fdrpkm69-5.png",
+        "caption": "CU RPKM 2026 House Ranking page with a create-room option"
+      },
+      {
+        "src": "/projects/fdrpkm69-6.png",
+        "caption": "CU RPKM 2026 Walk Rally page with a registered event and the total points"
+      },
+      {
+        "src": "/projects/fdrpkm69-7.png",
+        "caption": "CU RPKM 2026 Walk Rally staff check-in screen with a QR code scanner"
+      }
+    ]
   },
   {
     "name": "Beauty Pageant Judging System",
     "context": "Thinc.in.th",
     "period": "Feb 2026 – Present",
-    "description": "Judging system for beauty pageants, with room-based auth, short polling, and persistent score drafts.\n\nLive in production such as:\n\n- Miss World Thailand 2026\n- Miss/Mister Global 2026",
-    "stack": ["Next.js"],
+    "description": "Judging system for beauty pageants.\n\n- Room-based authentication\n- Real-time short polling for live results (SWR)\n- Persistent score drafts (saved in localStorage and synced to the database)\n- Judge status monitoring & management panel\n\nLive in production, e.g. Miss World Thailand 2026, Mister International 2026, Miss/Mister Global 2026.",
+    "stack": ["Next.js", "Go", "Fiber", "PostgreSQL"],
     "images": [
       {
-        "src": "/projects/voting-1.png"
+        "src": "/projects/voting-1.png",
+        "caption": "Committee voting panel for Round 5 with beauty and charisma scores from 0 to 10 per contestant"
       },
       {
-        "src": "/projects/voting-2.png"
+        "src": "/projects/voting-3.png",
+        "caption": "Admin competition page for Miss Global 2026 with competition details and a grid of contestants"
       },
       {
-        "src": "/projects/voting-3.png"
+        "src": "/projects/voting-2.png",
+        "caption": "Admin live-round page with contestant and committee counts, a ranked score table and an End Vote button"
+      },
+      {
+        "src": "/projects/voting-4.png",
+        "caption": "Committee status panel showing online and offline judges with their voting progress and a kick button"
+      }
+    ]
+  },
+  {
+    "name": "Vishnu24th Camp",
+    "period": "Jun 2026 – Jul 2026",
+    "description": "Web app for the Vishnu 24th engineering freshman camp.\n\n- Google Sign-In with Firebase\n- Designed and implemented the backend APIs and Firestore schemas\n- Token bucket rate limiter for the Popcat replica (blocks bots and scripted requests)\n- Load tested with k6 at 100 req/s for 1,500 users\n- (Personal) Simple dashboard for camp activities",
+    "stack": ["Next.js", "Firestore", "Firebase Auth", "k6"],
+    "images": [
+      {
+        "src": "/projects/vishnu-1.png",
+        "caption": "Vishnu24th Camp landing page with a language switcher and registration actions"
+      },
+      {
+        "src": "/projects/vishnu-2.png",
+        "caption": "Registration point page with a campus building map and a photo of the location"
+      },
+      {
+        "src": "/projects/vishnu-8.png",
+        "caption": "Ship ranking page with three top ships in wanted-poster style and the player's own rank"
+      },
+      {
+        "src": "/projects/vishnu-3.png",
+        "caption": "Ship detail page with total ship points and a QR code check-in button"
+      },
+      {
+        "src": "/projects/vishnu-4.png",
+        "caption": "Pop Kaew game page with a parrot character, a score counter and a ship leaderboard"
+      },
+      {
+        "src": "/projects/vishnu-5.png",
+        "caption": "Evening quiz page with a multiple-choice question and a save button"
+      },
+      {
+        "src": "/projects/vishnu-6.png",
+        "caption": "Trash sorting game with falling items and three bins for general, recycling and organic waste"
+      },
+      {
+        "src": "/projects/vishnu-7.png",
+        "caption": "Admin features page with toggles for pages and games"
+      },
+      {
+        "src": "/projects/vishnu-9.png",
+        "caption": "Camp activities dashboard with participant and answer counts and a chart of Q1 answers ranked by frequency"
+      }
+    ]
+  },
+  {
+    "name": "CU Open House 2026",
+    "context": "Information System Development (ISD), Chulalongkorn University",
+    "period": "Mar 2026",
+    "description": "Web app for CU Open House 2026.\n\n- User and attendee schema modeling\n- User and attendee APIs\n- Per-faculty top 1% leaderboard using percentile SQL",
+    "stack": ["Go", "Fiber", "GORM", "PostgreSQL"],
+    "github": "https://github.com/isd-sgcu/oph26-backend",
+    "images": [
+      {
+        "src": "/projects/oph26-1.png",
+        "caption": "CU Open House 2026 registration form, profile step, with name, age, status, email and province fields"
+      },
+      {
+        "src": "/projects/oph26-2.png",
+        "caption": "Staff welcome page with a QR code scanner"
+      },
+      {
+        "src": "/projects/oph26-3.png",
+        "caption": "Missing Pieces of my Journey map of faculty buildings with puzzle-piece counters and bottom navigation"
+      },
+      {
+        "src": "/projects/oph26-4.png",
+        "caption": "Enter Code dialog over the map for entering a code from a friend"
+      },
+      {
+        "src": "/projects/oph26-5.png",
+        "caption": "My Piece page showing the puzzle piece of the Faculty of Commerce and Accountancy with a create-code button"
+      },
+      {
+        "src": "/projects/oph26-6.png",
+        "caption": "Share screen with a shareable card of the completed map, 20 of 20 faculties collected"
+      },
+      {
+        "src": "/projects/oph26-7.png",
+        "caption": "Achievement overview showing the user is the 2,221st person to complete the puzzle"
       }
     ]
   },
@@ -54,76 +174,90 @@
     "name": "learn.thinc.in.th",
     "context": "Thinc.in.th",
     "period": "Feb 2026 – Present",
-    "description": "Knowledge platform revamped for a new brand CI, with a table of contents and author attribution.",
+    "description": "The Thinc. knowledge platform with roadmaps, blogs and videos.\n\n- Revamped the site for the new brand CI\n- Table of contents\n- Author attribution",
     "stack": ["Astro"],
     "github": "https://github.com/thinc-org/thinc-knowledge",
     "url": "https://learn.thinc.in.th",
     "images": [
       {
-        "src": "/projects/learn-1.png"
+        "src": "/projects/learn-1.png",
+        "caption": "learn.thinc.in.th home page hero section"
       },
       {
-        "src": "/projects/learn-2.png"
+        "src": "/projects/learn-2.png",
+        "caption": "learn.thinc.in.th Developer Roadmaps page"
       },
       {
-        "src": "/projects/learn-3.png"
+        "src": "/projects/learn-3.png",
+        "caption": "learn.thinc.in.th Roadmaps article/content page with markdown and a table of contents"
       },
       {
-        "src": "/projects/learn-4.png"
+        "src": "/projects/learn-5.png",
+        "caption": "learn.thinc.in.th Blogs page"
+      },
+      {
+        "src": "/projects/learn-4.png",
+        "caption": "learn.thinc.in.th Videos page"
       }
     ]
   },
   {
-    "name": "CU Open House 2026 (Backend)",
+    "name": "Chula Chiang Mai Camp 25th",
     "context": "Information System Development (ISD), Chulalongkorn University",
-    "period": "Jan 2026 – Mar 2026",
-    "description": "Backend API for CU Open House 2026, structured with Go clean architecture.",
-    "stack": ["Go", "Fiber", "GORM", "PostgreSQL"],
-    "github": "https://github.com/isd-sgcu/oph26-backend"
-  },
-  {
-    "name": "Chula Chiang Mai Camp 25th (Backend)",
-    "context": "Information System Development (ISD), Chulalongkorn University",
-    "period": "Oct 2025 – Dec 2025",
-    "description": "Backend API for Chula Chiang Mai Camp 25th, with JWT auth and CSV data export.",
+    "period": "Nov 2025 – Dec 2025",
+    "description": "Web app for Chula Chiang Mai Camp 25th.\n\n- Onboarding & registration, integrated with Keycloak\n- Code redemption, coin transactions, gift and reward system APIs\n- Leaderboard and history APIs",
     "stack": ["TypeScript", "Express", "Prisma"],
-    "github": "https://github.com/isd-sgcu/cucm25-backend"
-  },
-  {
-    "name": "CU First Date & RPKM 2025 (Backend)",
-    "context": "Information System Development (ISD), Chulalongkorn University",
-    "period": "Jun 2025 – Jul 2025",
-    "description": "Backend for CU First Date and Rub Phuean Kao Mai 2568 (รับเพื่อนก้าวใหม่), with JWT auth.",
-    "stack": ["TypeScript", "Express", "Prisma"],
-    "github": "https://github.com/isd-sgcu/fdrpkm68-backend"
-  },
-  {
-    "name": "Vishnu24th Camp",
-    "context": "Engineering freshman camp",
-    "period": "2025",
-    "description": "Full-stack camp web app with Google Sign-In and a token bucket rate limiter. Load tested with k6 at 100 req/s for 1,500 users.",
-    "stack": ["Next.js", "Firestore", "Firebase Auth", "k6"],
+    "github": "https://github.com/isd-sgcu/cucm25-backend",
     "images": [
       {
-        "src": "/projects/vishnu-1.png"
+        "src": "/projects/cucm-1.png",
+        "caption": "Home page with a coin balance, gift and coin actions, and a leaderboard"
       },
       {
-        "src": "/projects/vishnu-2.png"
+        "src": "/projects/cucm-2.png",
+        "caption": "Pay-with-coins dialog asking for an amount and a destination account"
       },
       {
-        "src": "/projects/vishnu-3.png"
+        "src": "/projects/cucm-3.png",
+        "caption": "Claim-coins dialog asking for an activity code"
       },
       {
-        "src": "/projects/vishnu-4.png"
+        "src": "/projects/cucm-4.png",
+        "caption": "History page listing coin transactions"
       },
       {
-        "src": "/projects/vishnu-5.png"
+        "src": "/projects/cucm-5.png",
+        "caption": "Friendship quiz form for sending a gift, with nickname, education level and interest dropdowns"
       },
       {
-        "src": "/projects/vishnu-6.png"
+        "src": "/projects/cucm-6.png",
+        "caption": "Admin menu with access toggles, code generation for senior and junior campers, ticket price and creation history"
+      }
+    ]
+  },
+  {
+    "name": "CU First Date & RPKM 2025",
+    "context": "Information System Development (ISD), Chulalongkorn University",
+    "period": "Jun 2025 – Jul 2025",
+    "description": "Web app for the CU First Date and Rub Phuean Kao Mai 2025 freshmen events.\n\n- QR check-in APIs\n- User onboarding form, water bottle APIs",
+    "stack": ["TypeScript", "Express", "Prisma"],
+    "github": "https://github.com/isd-sgcu/fdrpkm68-backend",
+    "images": [
+      {
+        "src": "/projects/fdrpkm68-1.png",
+        "caption": "CU First Date 2025 registration form"
       },
       {
-        "src": "/projects/vishnu-7.png"
+        "src": "/projects/fdrpkm68-2.png",
+        "caption": "CU First Date 2025 staff check-in page with a QR code scanner"
+      },
+      {
+        "src": "/projects/fdrpkm68-3.png",
+        "caption": "CU RPKM 2025 workshop event page"
+      },
+      {
+        "src": "/projects/fdrpkm68-4.png",
+        "caption": "CU RPKM 2025 House Ranking page"
       }
     ]
   },
@@ -131,12 +265,13 @@
     "name": "myCourseVille Parser",
     "context": "Personal",
     "period": "2025",
-    "description": "CLI tool that downloads enrolled course materials.",
+    "description": "CLI tool that downloads enrolled myCourseVille course materials.\n\n- Python with BeautifulSoup\n- Interactive semester and course selection",
     "stack": ["Python", "BeautifulSoup"],
     "github": "https://github.com/chawinkn/mcv-parser",
     "images": [
       {
-        "src": "/projects/mcv-parser.png"
+        "src": "/projects/mcv-parser.png",
+        "caption": "Terminal running the mcv-parser CLI while it downloads lecture slides"
       }
     ]
   }
