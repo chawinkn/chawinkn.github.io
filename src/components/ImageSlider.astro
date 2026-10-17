@@ -1,71 +1,78 @@
 ---
 interface Props {
-  images: { src: string; alt?: string }[];
-  alt: string;
+  images: { src: string; caption?: string }[];
 }
 
-const { images, alt } = Astro.props;
+const { images } = Astro.props;
 const multiple = images.length > 1;
 const circle =
   "absolute size-7 md:size-8 flex items-center justify-center rounded-full bg-foreground/50 font-mono text-base text-background hover:bg-foreground/70 cursor-pointer";
 const arrow = `${circle} top-1/2 -translate-y-1/2`;
-const counter = `absolute rounded-full bg-foreground/50 font-mono text-background px-2.5 py-0.5 text-xs left-1/2 -translate-x-1/2 pointer-events-none`;
+const counter =
+  "absolute rounded-full bg-foreground/50 font-mono text-background px-2.5 py-0.5 text-xs left-1/2 -translate-x-1/2 pointer-events-none";
 ---
 
-<div
-  data-slider
-  tabindex={multiple ? 0 : undefined}
-  class="relative border border-border bg-surface-muted focus-visible:outline focus-visible:outline-1 focus-visible:outline-foreground"
->
+<div data-slider>
   <div
-    data-track
-    class="flex min-h-48 max-h-[28rem] overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    tabindex={multiple ? 0 : undefined}
+    class="relative border border-border bg-surface-muted focus-visible:outline focus-visible:outline-1 focus-visible:outline-foreground"
   >
-    {images.map((img) => (
-      <img
-        src={img.src}
-        alt={img.alt ?? alt}
-        class="w-full shrink-0 snap-center object-contain cursor-zoom-in"
-      />
-    ))}
-  </div>
-  {multiple && (
-    <>
-      <button data-prev aria-label="Previous image" class={`${arrow} left-2`}>
-        &lt;
-      </button>
-      <button data-next aria-label="Next image" class={`${arrow} right-2`}>
-        &gt;
-      </button>
-      <span data-count class={`${counter} bottom-2`}>
-        1 / {images.length}
-      </span>
-    </>
-  )}
-  <dialog
-    data-zoom
-    class="m-0 h-dvh w-dvw max-h-none max-w-none overflow-hidden bg-transparent p-0 backdrop:bg-foreground/90"
-  >
-    <img
-      data-zoom-img
-      alt=""
-      draggable="false"
-      class="h-full w-full touch-none select-none object-contain px-14 py-12 md:px-16"
-    />
+    <div
+      data-track
+      class="flex min-h-48 max-h-[28rem] overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {images.map((img) => (
+        <img
+          src={img.src}
+          alt={img.src.split("/").pop()}
+          data-caption={img.caption}
+          class="w-full shrink-0 snap-center object-contain cursor-zoom-in"
+        />
+      ))}
+    </div>
     {multiple && (
       <>
-        <button data-zoom-prev aria-label="Previous image" class={`${arrow} left-4`}>
+        <button data-prev aria-label="Previous image" class={`${arrow} left-2`}>
           &lt;
         </button>
-        <button data-zoom-next aria-label="Next image" class={`${arrow} right-4`}>
+        <button data-next aria-label="Next image" class={`${arrow} right-2`}>
           &gt;
         </button>
-        <span data-zoom-count class={`${counter} bottom-4`}>
+        <span data-count class={`${counter} bottom-2`}>
           1 / {images.length}
         </span>
       </>
     )}
-  </dialog>
+    <dialog
+      data-zoom
+      class="m-0 h-dvh w-dvw max-h-none max-w-none overflow-hidden bg-transparent p-0 backdrop:bg-foreground/90"
+    >
+      <img
+        data-zoom-img
+        alt=""
+        draggable="false"
+        class="h-full w-full touch-none select-none object-contain px-14 py-12 md:px-16"
+      />
+      {multiple && (
+        <>
+          <button data-zoom-prev aria-label="Previous image" class={`${arrow} left-4`}>
+            &lt;
+          </button>
+          <button data-zoom-next aria-label="Next image" class={`${arrow} right-4`}>
+            &gt;
+          </button>
+          <span data-zoom-count class={`${counter} bottom-4`}>
+            1 / {images.length}
+          </span>
+        </>
+      )}
+    </dialog>
+  </div>
+  {images[0].caption && (
+    <p data-caption class="mt-2 font-mono text-xs text-muted">
+      {images[0].caption}
+    </p>
+  )}
 </div>
 
 <script>
@@ -75,6 +82,7 @@ const counter = `absolute rounded-full bg-foreground/50 font-mono text-backgroun
     const zoomImg = zoom.querySelector<HTMLImageElement>("[data-zoom-img]")!;
     const count = root.querySelector("[data-count]");
     const zoomCount = zoom.querySelector("[data-zoom-count]");
+    const caption = root.querySelector("p[data-caption]");
     const imgs = [...track.querySelectorAll("img")];
     const total = imgs.length;
     const wrap = (i: number) => (i + total) % total;
@@ -180,6 +188,7 @@ const counter = `absolute rounded-full bg-foreground/50 font-mono text-backgroun
 
     track.addEventListener("scroll", () => {
       if (count) count.textContent = `${index() + 1} / ${total}`;
+      if (caption) caption.textContent = imgs[index()]?.dataset.caption ?? "";
     });
     root.querySelector("[data-prev]")?.addEventListener("click", () => go(index() - 1));
     root.querySelector("[data-next]")?.addEventListener("click", () => go(index() + 1));
