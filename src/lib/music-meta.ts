@@ -14,6 +14,9 @@ export interface Meta {
 const cache: Map<string, Meta> = ((globalThis as any).__musicMeta ??= new Map());
 const TYPE_SUFFIX = /\s+-\s+(Single|EP)$/i;
 
+export const smallCover = (url: string) =>
+  url.replace("/400x400bb", "/100x100bb").replace("/front-500", "/front-250");
+
 const mainArtist = (artist: string) =>
   artist
     .split(/\s+(?:ft\.?|feat\.?|&)\s+|,/i)[0]
@@ -40,7 +43,7 @@ async function itunesMeta(song: SongKey): Promise<Meta | null> {
   if (!hit) return null;
   const suffix = hit.collectionName.match(TYPE_SUFFIX)?.[1].toLowerCase();
   return {
-    cover: hit.artworkUrl100?.replace("100x100bb", "200x200bb") ?? null,
+    cover: hit.artworkUrl100?.replace("100x100bb", "400x400bb") ?? null,
     release: {
       id: `it:${hit.collectionId}`,
       name: hit.collectionName.replace(TYPE_SUFFIX, ""),
@@ -69,7 +72,7 @@ function musicBrainzMeta(song: SongKey): Promise<Meta | null> {
     let release = matches[0];
     let cover: string | null = null;
     for (const candidate of matches.slice(0, 3)) {
-      const url = `https://coverartarchive.org/release/${candidate.id}/front-250`;
+      const url = `https://coverartarchive.org/release/${candidate.id}/front-500`;
       if (await fetchOk(url, { method: "HEAD" })) {
         release = candidate;
         cover = url;
