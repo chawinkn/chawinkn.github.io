@@ -6,11 +6,12 @@ Built with [Astro](https://astro.build), React, and Tailwind CSS 4. Deployed to 
 
 ## Pages
 
-| Route    | Source                  | Content                          |
-| :------- | :---------------------- | :------------------------------- |
-| `/`      | `src/pages/index.astro` | Intro and weekly Unsplash photos |
-| `/music` | `src/pages/music.astro` | Favorite songs and lyrics        |
-| `/blogs` | `src/pages/blogs.astro` | Writing (none yet)               |
+| Route       | Source                     | Content                                                   |
+| :---------- | :------------------------- | :-------------------------------------------------------- |
+| `/`         | `src/pages/index.astro`    | Intro and weekly Unsplash photos                          |
+| `/projects` | `src/pages/projects.astro` | Projects with screenshot sliders                          |
+| `/music`    | `src/pages/music.astro`    | Songs with album covers, a releases view, and a hero song |
+| `/blogs`    | `src/pages/blogs.astro`    | Writing (none yet)                                        |
 
 ## Project Structure
 
@@ -18,12 +19,14 @@ Built with [Astro](https://astro.build), React, and Tailwind CSS 4. Deployed to 
 /
 ├── public/               static files, CV, favicons, music-add.html
 ├── src
+│   ├── assets/projects/  project screenshots, optimized by astro:assets
 │   ├── components/       shared Astro components
-│   ├── data/music.json   song list for /music
+│   ├── data/             music.json (songs), projects.json (projects)
 │   ├── layouts/          Layout.astro
+│   ├── lib/music-meta.ts album cover and release lookup, run at build time
 │   ├── pages/            routes
 │   └── styles/           global.css, theme.css
-└── .github/workflows/    Pages deploy
+└── .github/workflows/    ci.yml (pull request checks), astro.yml (Pages deploy)
 ```
 
 ## Commands
@@ -40,7 +43,7 @@ Run from the project root. Requires Node >= 22.12 and [Bun](https://bun.sh).
 | `bun run format:check` | Check formatting                     |
 | `bun astro check`      | Type-check                           |
 
-Husky runs Prettier on staged files before each commit.
+Husky runs Prettier on staged files before each commit. Pull requests into `main` run `format:check`, `astro check` and `astro build` (`.github/workflows/ci.yml`).
 
 ## Environment
 
@@ -64,7 +67,13 @@ Open `public/music-add.html` (served at `/music-add.html`, `noindex`) to pick ly
 }
 ```
 
-`album` is optional.
+`album` is optional and only a hint. Covers, album names and releases come from iTunes (MusicBrainz as fallback) at build time, so there are no images to add. The build needs network access. A failed lookup leaves a blank cover and does not fail the build. Covers found only on MusicBrainz are saved to `dist/covers` during the build, or to the git-ignored `public/covers` in dev.
+
+The hero song and lyric at the top of `/music` change at midnight and noon, Bangkok time.
+
+## Adding project screenshots
+
+Put the PNG in `src/assets/projects/` and reference it as `/projects/<file>.png` in `src/data/projects.json`. The slider serves it as webp with a `srcset`.
 
 ## Deployment
 
