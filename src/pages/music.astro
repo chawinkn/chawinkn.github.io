@@ -12,6 +12,73 @@ interface Song {
 }
 
 const songs = [...(rawMusicData as Song[])].sort((a, b) => a.name.localeCompare(b.name));
+const cache: Map<string, string> = ((globalThis as any).__musicCovers ??= new Map());
+
+const mainArtist = (artist: string) =>
+  artist
+    .split(/\s+(?:ft\.?|feat\.?|&)\s+|,/i)[0]
+    .trim()
+    .toLowerCase();
+
+async function fetchOk(url: string, init: RequestInit = {}) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt) await new Promise((r) => setTimeout(r, 1500));
+    const res = await fetch(url, { ...init, signal: AbortSignal.timeout(10000) }).catch(() => null);
+    if (res?.ok) return res;
+  }
+  return null;
+}
+
+async function itunesCover(song: Song): Promise<string | null> {
+  const term = encodeURIComponent(`${song.name} ${song.artist}`);
+  const res = await fetchOk(`https://itunes.apple.com/search?entity=song&limit=5&term=${term}`);
+  if (!res) return null;
+  const { results = [] } = await res.json();
+  const artist = mainArtist(song.artist);
+  const byArtist = results.filter((r: any) => r.artistName?.toLowerCase().includes(artist));
+  const hit = byArtist.find((r: any) => r.collectionName === song.album) ?? byArtist[0];
+  return hit?.artworkUrl100?.replace("100x100bb", "600x600bb") ?? null;
+}
+
+let musicBrainzQueue: Promise<unknown> = Promise.resolve();
+
+function musicBrainzCover(song: Song): Promise<string | null> {
+  const artist = mainArtist(song.artist);
+  const title = (song.album || song.name).replace(/"/g, "");
+  const query = encodeURIComponent(`release:"${title}" AND artist:"${artist.replace(/"/g, "")}"`);
+  const run = musicBrainzQueue.then(async () => {
+    const res = await fetchOk(
+      `https://musicbrainz.org/ws/2/release/?fmt=json&limit=5&query=${query}`,
+      {
+        headers: { "User-Agent": "chawinkn.com/1.0 (https://chawinkn.com)" },
+      }
+    );
+    if (!res) return null;
+    const { releases = [] } = await res.json();
+    const matches = releases.filter((r: any) =>
+      r["artist-credit"]?.some((a: any) => a.name?.toLowerCase().includes(artist))
+    );
+    for (const release of matches.slice(0, 3)) {
+      const url = `https://coverartarchive.org/release/${release.id}/front-500`;
+      if (await fetchOk(url, { method: "HEAD" })) return url;
+    }
+    return null;
+  });
+  musicBrainzQueue = run.catch(() => {}).then(() => new Promise((r) => setTimeout(r, 1100)));
+  return run;
+}
+
+async function getCover(song: Song) {
+  const key = `${song.name}|${song.artist}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const cover =
+    (await itunesCover(song).catch(() => null)) ?? (await musicBrainzCover(song).catch(() => null));
+  if (cover) cache.set(key, cover);
+  return cover;
+}
+
+const tiles = await Promise.all(songs.map(async (song) => ({ song, cover: await getCover(song) })));
 const defaultSong = songs[0];
 const defaultLyric = defaultSong?.favoriteLyrics?.[0] || "";
 const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.get("v") : "";
@@ -62,57 +129,45 @@ const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.
           </label>
         </div>
       </div>
-      <div class="mt-3 overflow-x-auto border-y border-border">
-        <table class="w-full min-w-[34rem] border-collapse font-mono text-sm">
-          <thead class="text-xs text-foreground">
-            <tr class="border-b border-border">
-              <th scope="col" class="py-3 pr-6 text-left font-medium">
-                Name
-              </th>
-              <th scope="col" class="px-6 py-3 text-left font-medium">
-                Artist
-              </th>
-              <th scope="col" class="pl-6 py-3 text-left font-medium">
-                Album
-              </th>
-            </tr>
-          </thead>
-          <tbody id="music-list-body">
-            {songs.map((song) => (
-              <tr
-                class="border-b border-border/70 last:border-0"
-                data-name={song.name}
-                data-artist={song.artist}
-                data-album={song.album || ""}
-              >
-                <td class="py-4 pr-6 font-medium">
-                  <a
-                    href={song.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    class="text-foreground underline underline-offset-4 hover:opacity-70"
-                  >
-                    {song.name}
-                  </a>
-                </td>
-                <td class="px-6 py-4 text-foreground">{song.artist}</td>
-                <td class="pl-6 py-4 text-foreground">{song.album || "—"}</td>
-              </tr>
-            ))}
-            <tr id="music-empty" class="border-b border-border/70 last:border-0" hidden>
-              <td colspan="3" class="py-8 text-center text-muted">
-                no songs found
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <ul id="music-list-body" class="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
+        {tiles.map(({ song, cover }) => (
+          <li data-name={song.name} data-artist={song.artist} data-album={song.album || ""}>
+            <a
+              href={song.url}
+              target="_blank"
+              rel="noreferrer"
+              class="block font-mono hover:opacity-70"
+            >
+              <div class="aspect-square w-full overflow-hidden bg-surface-muted">
+                {cover && (
+                  <img
+                    src={cover}
+                    alt={song.album ? `${song.album} cover` : `${song.name} cover`}
+                    width="600"
+                    height="600"
+                    loading="lazy"
+                    decoding="async"
+                    class="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+              <p class="mt-2 text-sm font-medium text-foreground">{song.name}</p>
+              <p class="text-xs text-muted">{song.artist}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p id="music-empty" class="py-8 text-center font-mono text-sm text-muted" hidden>
+        no songs found
+      </p>
     </section>
   </section>
 
   <script is:inline define:vars={{ songs }}>
     if (songs.length > 0) {
-      const randomSong = songs[Math.floor(Math.random() * songs.length)];
+      const slot = Math.floor((Date.now() + 7 * 3600000) / 43200000);
+      const pick = (n, salt) => (Math.imul(slot + salt, 2654435761) >>> 0) % n;
+      const randomSong = songs[pick(songs.length, 0)];
 
       const videoId = new URL(randomSong.url).searchParams.get("v");
       const songLinkEl = document.getElementById("today-song-link");
@@ -120,7 +175,7 @@ const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.
       const lyricEl = document.getElementById("random-lyric-text");
       const songNameEl = document.getElementById("random-song-name");
       const lyrics = randomSong.favoriteLyrics || [];
-      const randomLyric = lyrics[Math.floor(Math.random() * lyrics.length)];
+      const randomLyric = lyrics[pick(lyrics.length, 1)];
 
       if (songLinkEl && videoId) {
         songLinkEl.href = randomSong.url;
@@ -149,7 +204,7 @@ const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.
       const emptyRowEl = document.getElementById("music-empty");
 
       if (musicListBodyEl) {
-        const rows = [...musicListBodyEl.querySelectorAll("tr:not(#music-empty)")];
+        const rows = [...musicListBodyEl.querySelectorAll("li")];
 
         const filterRows = () => {
           const q = musicSearchEl ? musicSearchEl.value.trim().toLowerCase() : "";
