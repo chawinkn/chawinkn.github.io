@@ -94,12 +94,7 @@ const modeClass =
             data-album={release.name}
             data-search={`${song.name} ${song.artist} ${release.name}`.toLowerCase()}
           >
-            <a
-              href={song.url}
-              target="_blank"
-              rel="noreferrer"
-              class="flex items-center gap-3 font-mono hover:opacity-70"
-            >
+            <div class="flex items-center gap-3 font-mono">
               <div class="size-16 shrink-0 overflow-hidden bg-surface-muted">
                 {cover && (
                   <img
@@ -114,11 +109,20 @@ const modeClass =
                 )}
               </div>
               <div class="min-w-0">
-                <p class="truncate text-sm font-medium text-foreground">{song.name}</p>
+                <p class="truncate text-sm font-medium">
+                  <a
+                    href={song.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    class="text-link underline underline-offset-4 hover:opacity-70"
+                  >
+                    {song.name}
+                  </a>
+                </p>
                 <p class="truncate text-xs text-foreground/80">{song.artist}</p>
                 <p class="truncate text-xs text-foreground/50">{release.name}</p>
               </div>
-            </a>
+            </div>
           </li>
         ))}
       </ul>
