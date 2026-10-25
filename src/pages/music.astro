@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import PictureFigure from "../components/PictureFigure.astro";
 import rawMusicData from "../data/music.json";
+import { getMeta } from "../lib/music-meta";
 
 interface Song {
   name: string;
@@ -12,76 +13,28 @@ interface Song {
 }
 
 const songs = [...(rawMusicData as Song[])].sort((a, b) => a.name.localeCompare(b.name));
-const cache: Map<string, string> = ((globalThis as any).__musicCovers ??= new Map());
+const tiles = await Promise.all(songs.map(async (song) => ({ song, ...(await getMeta(song)) })));
 
-const mainArtist = (artist: string) =>
-  artist
-    .split(/\s+(?:ft\.?|feat\.?|&)\s+|,/i)[0]
-    .trim()
-    .toLowerCase();
-
-async function fetchOk(url: string, init: RequestInit = {}) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt) await new Promise((r) => setTimeout(r, 1500));
-    const res = await fetch(url, { ...init, signal: AbortSignal.timeout(10000) }).catch(() => null);
-    if (res?.ok) return res;
-  }
-  return null;
+const releaseMap = new Map<
+  string,
+  { release: (typeof tiles)[number]["release"]; cover: string | null; owned: Song[] }
+>();
+for (const { song, release, cover } of tiles) {
+  const entry = releaseMap.get(release.id) ?? { release, cover, owned: [] };
+  entry.cover ??= cover;
+  entry.owned.push(song);
+  releaseMap.set(release.id, entry);
 }
+const releases = [...releaseMap.values()].sort((a, b) =>
+  a.release.name.localeCompare(b.release.name)
+);
 
-async function itunesCover(song: Song): Promise<string | null> {
-  const term = encodeURIComponent(`${song.name} ${song.artist}`);
-  const res = await fetchOk(`https://itunes.apple.com/search?entity=song&limit=5&term=${term}`);
-  if (!res) return null;
-  const { results = [] } = await res.json();
-  const artist = mainArtist(song.artist);
-  const byArtist = results.filter((r: any) => r.artistName?.toLowerCase().includes(artist));
-  const hit = byArtist.find((r: any) => r.collectionName === song.album) ?? byArtist[0];
-  return hit?.artworkUrl100?.replace("100x100bb", "600x600bb") ?? null;
-}
-
-let musicBrainzQueue: Promise<unknown> = Promise.resolve();
-
-function musicBrainzCover(song: Song): Promise<string | null> {
-  const artist = mainArtist(song.artist);
-  const title = (song.album || song.name).replace(/"/g, "");
-  const query = encodeURIComponent(`release:"${title}" AND artist:"${artist.replace(/"/g, "")}"`);
-  const run = musicBrainzQueue.then(async () => {
-    const res = await fetchOk(
-      `https://musicbrainz.org/ws/2/release/?fmt=json&limit=5&query=${query}`,
-      {
-        headers: { "User-Agent": "chawinkn.com/1.0 (https://chawinkn.com)" },
-      }
-    );
-    if (!res) return null;
-    const { releases = [] } = await res.json();
-    const matches = releases.filter((r: any) =>
-      r["artist-credit"]?.some((a: any) => a.name?.toLowerCase().includes(artist))
-    );
-    for (const release of matches.slice(0, 3)) {
-      const url = `https://coverartarchive.org/release/${release.id}/front-500`;
-      if (await fetchOk(url, { method: "HEAD" })) return url;
-    }
-    return null;
-  });
-  musicBrainzQueue = run.catch(() => {}).then(() => new Promise((r) => setTimeout(r, 1100)));
-  return run;
-}
-
-async function getCover(song: Song) {
-  const key = `${song.name}|${song.artist}`;
-  const cached = cache.get(key);
-  if (cached) return cached;
-  const cover =
-    (await itunesCover(song).catch(() => null)) ?? (await musicBrainzCover(song).catch(() => null));
-  if (cover) cache.set(key, cover);
-  return cover;
-}
-
-const tiles = await Promise.all(songs.map(async (song) => ({ song, cover: await getCover(song) })));
 const defaultSong = songs[0];
 const defaultLyric = defaultSong?.favoriteLyrics?.[0] || "";
 const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.get("v") : "";
+const gridClass = "mt-4 grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-4";
+const modeClass =
+  "underline underline-offset-4 aria-[pressed=false]:text-muted aria-[pressed=false]:no-underline";
 ---
 
 <Layout
@@ -109,6 +62,19 @@ const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.
           music list
         </h3>
         <div class="flex flex-wrap items-center gap-4">
+          <div
+            class="flex items-center gap-2 font-mono text-xs text-foreground"
+            role="group"
+            aria-label="view mode"
+          >
+            <button type="button" data-mode="songs" aria-pressed="true" class={modeClass}>
+              songs
+            </button>
+            <span class="text-muted">|</span>
+            <button type="button" data-mode="releases" aria-pressed="false" class={modeClass}>
+              releases
+            </button>
+          </div>
           <input
             id="music-search"
             type="search"
@@ -129,31 +95,101 @@ const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.
           </label>
         </div>
       </div>
-      <ul id="music-list-body" class="mt-4 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-5">
+      <ul id="music-list-body" class={gridClass}>
         {tiles.map(({ song, cover }) => (
-          <li data-name={song.name} data-artist={song.artist} data-album={song.album || ""}>
+          <li
+            data-name={song.name}
+            data-artist={song.artist}
+            data-album={song.album || ""}
+            data-search={`${song.name} ${song.artist} ${song.album || ""}`.toLowerCase()}
+          >
             <a
               href={song.url}
               target="_blank"
               rel="noreferrer"
-              class="block font-mono hover:opacity-70"
+              class="flex items-center gap-3 font-mono hover:opacity-70"
             >
-              <div class="aspect-square w-full overflow-hidden bg-surface-muted">
+              <div class="size-12 shrink-0 overflow-hidden bg-surface-muted">
                 {cover && (
                   <img
                     src={cover}
                     alt={song.album ? `${song.album} cover` : `${song.name} cover`}
-                    width="600"
-                    height="600"
+                    width="48"
+                    height="48"
                     loading="lazy"
                     decoding="async"
-                    class="h-full w-full object-cover"
+                    class="size-full object-cover"
                   />
                 )}
               </div>
-              <p class="mt-2 text-sm font-medium text-foreground">{song.name}</p>
-              <p class="text-xs text-muted">{song.artist}</p>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium text-foreground">{song.name}</p>
+                <p class="truncate text-xs text-muted">{song.artist}</p>
+              </div>
             </a>
+          </li>
+        ))}
+      </ul>
+      <ul id="release-list" class={gridClass} hidden>
+        {releases.map(({ release, cover, owned }) => (
+          <li
+            class="has-[details[open]]:col-span-full"
+            data-name={release.name}
+            data-artist={owned[0].artist}
+            data-album={release.name}
+            data-search={`${release.name} ${owned[0].artist} ${owned.map((s) => s.name).join(" ")}`.toLowerCase()}
+          >
+            <details class="font-mono">
+              <summary class="flex cursor-pointer list-none items-center gap-3 hover:opacity-70 [&::-webkit-details-marker]:hidden">
+                <div class="size-12 shrink-0 overflow-hidden bg-surface-muted">
+                  {cover && (
+                    <img
+                      src={cover}
+                      alt={`${release.name} cover`}
+                      width="48"
+                      height="48"
+                      loading="lazy"
+                      decoding="async"
+                      class="size-full object-cover"
+                    />
+                  )}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-foreground">{release.name}</p>
+                  <p class="flex gap-1 text-xs text-muted">
+                    <span class="truncate">{owned[0].artist}</span>
+                    {release.type && <span class="shrink-0">· {release.type}</span>}
+                  </p>
+                  {(release.type === "album" || release.type === "ep") && release.total && (
+                    <div class="mt-1 flex items-center gap-2">
+                      <div class="h-0.5 flex-1 bg-border">
+                        <div
+                          class="h-full bg-foreground"
+                          style={`width:${Math.min(100, (owned.length / release.total) * 100)}%`}
+                        />
+                      </div>
+                      <span class="text-xs text-muted">
+                        {owned.length}/{release.total}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </summary>
+              <ul class="mt-2 space-y-1 pl-15 text-xs">
+                {owned.map((s) => (
+                  <li>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      class="text-foreground underline underline-offset-4 hover:opacity-70"
+                    >
+                      {s.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
           </li>
         ))}
       </ul>
@@ -200,39 +236,54 @@ const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.
 
       const musicSortEl = document.getElementById("music-sort");
       const musicSearchEl = document.getElementById("music-search");
-      const musicListBodyEl = document.getElementById("music-list-body");
       const emptyRowEl = document.getElementById("music-empty");
+      const lists = {
+        songs: document.getElementById("music-list-body"),
+        releases: document.getElementById("release-list"),
+      };
+      const modeButtons = [...document.querySelectorAll("[data-mode]")];
+      let mode = "songs";
 
-      if (musicListBodyEl) {
-        const rows = [...musicListBodyEl.querySelectorAll("li")];
+      const rowsOf = () => [...lists[mode].querySelectorAll(":scope > li")];
 
-        const filterRows = () => {
-          const q = musicSearchEl ? musicSearchEl.value.trim().toLowerCase() : "";
-          let visible = 0;
-          rows.forEach((row) => {
-            const text =
-              `${row.dataset.name || ""} ${row.dataset.artist || ""} ${row.dataset.album || ""}`.toLowerCase();
-            const match = !q || text.includes(q);
-            row.hidden = !match;
-            if (match) visible++;
-          });
-          if (emptyRowEl) {
-            emptyRowEl.hidden = visible > 0;
-          }
-        };
-
-        if (musicSearchEl) {
-          musicSearchEl.addEventListener("input", filterRows);
+      const filterRows = () => {
+        const q = musicSearchEl ? musicSearchEl.value.trim().toLowerCase() : "";
+        let visible = 0;
+        rowsOf().forEach((row) => {
+          const match = !q || row.dataset.search.includes(q);
+          row.hidden = !match;
+          if (match) visible++;
+        });
+        if (emptyRowEl) {
+          emptyRowEl.hidden = visible > 0;
         }
+      };
 
-        if (musicSortEl) {
-          musicSortEl.addEventListener("change", () => {
-            const sortKey = musicSortEl.value;
-            rows.sort((a, b) => (a.dataset[sortKey] || "").localeCompare(b.dataset[sortKey] || ""));
-            musicListBodyEl.prepend(...rows);
-          });
-        }
+      const sortRows = () => {
+        const sortKey = musicSortEl ? musicSortEl.value : "name";
+        const rows = rowsOf().sort((a, b) =>
+          (a.dataset[sortKey] || "").localeCompare(b.dataset[sortKey] || "")
+        );
+        lists[mode].prepend(...rows);
+      };
+
+      if (musicSearchEl) {
+        musicSearchEl.addEventListener("input", filterRows);
       }
+
+      if (musicSortEl) {
+        musicSortEl.addEventListener("change", sortRows);
+      }
+
+      modeButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          mode = button.dataset.mode;
+          Object.entries(lists).forEach(([key, el]) => (el.hidden = key !== mode));
+          modeButtons.forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+          sortRows();
+          filterRows();
+        });
+      });
     }
   </script>
 </Layout>
