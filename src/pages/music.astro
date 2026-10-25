@@ -87,12 +87,12 @@ const modeClass =
         </label>
       </div>
       <ul id="music-list-body" class={gridClass}>
-        {tiles.map(({ song, cover }) => (
+        {tiles.map(({ song, cover, release }) => (
           <li
             data-name={song.name}
             data-artist={song.artist}
-            data-album={song.album || ""}
-            data-search={`${song.name} ${song.artist} ${song.album || ""}`.toLowerCase()}
+            data-album={release.name}
+            data-search={`${song.name} ${song.artist} ${release.name}`.toLowerCase()}
           >
             <a
               href={song.url}
@@ -104,7 +104,7 @@ const modeClass =
                 {cover && (
                   <img
                     src={smallCover(cover)}
-                    alt={song.album ? `${song.album} cover` : `${song.name} cover`}
+                    alt={`${release.name} cover`}
                     width="64"
                     height="64"
                     loading="lazy"
@@ -116,6 +116,7 @@ const modeClass =
               <div class="min-w-0">
                 <p class="truncate text-sm font-medium text-foreground">{song.name}</p>
                 <p class="truncate text-xs text-muted">{song.artist}</p>
+                <p class="truncate text-xs text-muted">{release.name}</p>
               </div>
             </a>
           </li>
