@@ -1,3 +1,7 @@
+import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
 interface SongKey {
   name: string;
   artist: string;
@@ -15,7 +19,7 @@ const cache: Map<string, Meta> = ((globalThis as any).__musicMeta ??= new Map())
 const TYPE_SUFFIX = /\s+-\s+(Single|EP)$/i;
 
 export const smallCover = (url: string) =>
-  url.replace("/400x400bb", "/100x100bb").replace("/front-500", "/front-250");
+  url.replace("/400x400bb", "/200x200bb").replace("/front-500", "/front-250");
 
 const mainArtist = (artist: string) =>
   artist
@@ -26,7 +30,7 @@ const mainArtist = (artist: string) =>
 async function fetchOk(url: string, init: RequestInit = {}) {
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt) await new Promise((r) => setTimeout(r, 1500));
-    const res = await fetch(url, { ...init, signal: AbortSignal.timeout(10000) }).catch(() => null);
+    const res = await fetch(url, { ...init, signal: AbortSignal.timeout(20000) }).catch(() => null);
     if (res?.ok) return res;
   }
   return null;
@@ -53,6 +57,19 @@ async function itunesMeta(song: SongKey): Promise<Meta | null> {
   };
 }
 
+const COVER_DIR = join(process.cwd(), "public", "covers");
+
+async function saveCover(id: string) {
+  const file = join(COVER_DIR, `mb-${id}.jpg`);
+  if (!existsSync(file)) {
+    const res = await fetchOk(`https://coverartarchive.org/release/${id}/front-500`);
+    if (!res) return null;
+    await mkdir(COVER_DIR, { recursive: true });
+    await writeFile(file, Buffer.from(await res.arrayBuffer()));
+  }
+  return `/covers/mb-${id}.jpg`;
+}
+
 let musicBrainzQueue: Promise<unknown> = Promise.resolve();
 
 function musicBrainzMeta(song: SongKey): Promise<Meta | null> {
@@ -72,10 +89,10 @@ function musicBrainzMeta(song: SongKey): Promise<Meta | null> {
     let release = matches[0];
     let cover: string | null = null;
     for (const candidate of matches.slice(0, 3)) {
-      const url = `https://coverartarchive.org/release/${candidate.id}/front-500`;
-      if (await fetchOk(url, { method: "HEAD" })) {
+      const saved = await saveCover(candidate.id);
+      if (saved) {
         release = candidate;
-        cover = url;
+        cover = saved;
         break;
       }
     }

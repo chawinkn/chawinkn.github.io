@@ -109,13 +109,13 @@ const modeClass =
               rel="noreferrer"
               class="flex items-center gap-3 font-mono hover:opacity-70"
             >
-              <div class="size-12 shrink-0 overflow-hidden bg-surface-muted">
+              <div class="size-16 shrink-0 overflow-hidden bg-surface-muted">
                 {cover && (
                   <img
                     src={smallCover(cover)}
                     alt={song.album ? `${song.album} cover` : `${song.name} cover`}
-                    width="48"
-                    height="48"
+                    width="64"
+                    height="64"
                     loading="lazy"
                     decoding="async"
                     class="size-full object-cover"
