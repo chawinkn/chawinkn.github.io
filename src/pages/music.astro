@@ -57,43 +57,34 @@ const modeClass =
     )}
 
     <section aria-labelledby="music-list-heading" class="pt-2">
-      <div class="flex flex-wrap items-baseline justify-between gap-3">
-        <h3 id="music-list-heading" class="font-mono text-sm text-foreground">
-          music list
-        </h3>
-        <div class="flex flex-wrap items-center gap-4">
-          <div
-            class="flex items-center gap-2 font-mono text-xs text-foreground"
-            role="group"
-            aria-label="view mode"
-          >
-            <button type="button" data-mode="songs" aria-pressed="true" class={modeClass}>
-              songs
-            </button>
-            <span class="text-muted">|</span>
-            <button type="button" data-mode="releases" aria-pressed="false" class={modeClass}>
-              releases
-            </button>
-          </div>
-          <input
-            id="music-search"
-            type="search"
-            placeholder="search..."
-            autocomplete="off"
-            class="bg-transparent font-mono text-xs text-foreground placeholder:text-muted outline-none border-b border-border focus:border-foreground py-0.5"
-          />
-          <label for="music-sort" class="font-mono text-xs text-foreground">
-            sort by:
-            <select
-              id="music-sort"
-              class="bg-transparent font-mono text-xs text-foreground underline underline-offset-4 outline-none"
-            >
-              <option value="name">name</option>
-              <option value="artist">artist</option>
-              <option value="album">album</option>
-            </select>
-          </label>
+      <div class="flex items-baseline justify-between gap-3 font-mono text-sm text-foreground">
+        <h3 id="music-list-heading">music list</h3>
+        <div class="flex items-center gap-3" role="group" aria-label="view mode">
+          <button type="button" data-mode="songs" aria-pressed="true" class={modeClass}>
+            songs
+          </button>
+          <span class="text-muted">|</span>
+          <button type="button" data-mode="releases" aria-pressed="false" class={modeClass}>
+            releases
+          </button>
         </div>
+      </div>
+      <div class="mt-4 flex items-end gap-6 font-mono text-sm text-foreground">
+        <input
+          id="music-search"
+          type="search"
+          placeholder="search..."
+          autocomplete="off"
+          class="min-w-0 flex-1 bg-transparent py-1 outline-none border-b border-border placeholder:text-muted focus:border-foreground"
+        />
+        <label for="music-sort" class="shrink-0">
+          sort by:
+          <select id="music-sort" class="bg-transparent underline underline-offset-4 outline-none">
+            <option value="name">name</option>
+            <option value="artist">artist</option>
+            <option value="album">album</option>
+          </select>
+        </label>
       </div>
       <ul id="music-list-body" class={gridClass}>
         {tiles.map(({ song, cover }) => (
