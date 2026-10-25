@@ -6,6 +6,8 @@
   --surface-muted: #f4f4f5;
   --surface-subtle: #f9f9fa;
 
+  --link: #1d4ed8;
+
   --muted: #71717a;
   --muted-foreground: #71717a;
   --subtle: #a1a1aa;
@@ -54,6 +56,7 @@
   --color-surface-muted: var(--surface-muted);
   --color-surface-subtle: var(--surface-subtle);
 
+  --color-link: var(--link);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-subtle: var(--subtle);
