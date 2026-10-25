@@ -17,7 +17,7 @@ const slides = await Promise.all(
     return {
       meta,
       caption: img.caption,
-      alt: img.src.split("/").pop(),
+      alt: img.src.split("/").pop() ?? "",
       widths: [...[640, 1280].filter((w) => w < meta.width), meta.width],
       full: (await getImage({ src: meta, width: meta.width, format: "webp" })).src,
     };
