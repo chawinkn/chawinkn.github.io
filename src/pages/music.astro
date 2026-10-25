@@ -32,7 +32,7 @@ const releases = [...releaseMap.values()].sort((a, b) =>
 const defaultSong = songs[0];
 const defaultLyric = defaultSong?.favoriteLyrics?.[0] || "";
 const defaultVideoId = defaultSong?.url ? new URL(defaultSong.url).searchParams.get("v") : "";
-const gridClass = "mt-4 grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-4";
+const gridClass = "mt-4 grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3";
 const modeClass =
   "underline underline-offset-4 aria-[pressed=false]:text-muted aria-[pressed=false]:no-underline";
 ---
