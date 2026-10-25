@@ -57,7 +57,7 @@ async function itunesMeta(song: SongKey): Promise<Meta | null> {
   };
 }
 
-const COVER_DIR = join(process.cwd(), "public", "covers");
+const COVER_DIR = join(process.cwd(), import.meta.env.DEV ? "public" : "dist", "covers");
 
 async function saveCover(id: string) {
   const file = join(COVER_DIR, `mb-${id}.jpg`);
