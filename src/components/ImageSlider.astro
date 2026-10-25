@@ -1,16 +1,28 @@
 ---
-import { readFileSync } from "node:fs";
+import { Image, getImage } from "astro:assets";
 
 interface Props {
   images: { src: string; caption?: string }[];
 }
 
+const files = import.meta.glob<{ default: ImageMetadata }>("/src/assets/projects/*.png", {
+  eager: true,
+});
+
 const { images } = Astro.props;
 const multiple = images.length > 1;
-const size = (src: string) => {
-  const png = readFileSync(`public${src}`);
-  return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
-};
+const slides = await Promise.all(
+  images.map(async (img) => {
+    const meta = files[`/src/assets${img.src}`].default;
+    return {
+      meta,
+      caption: img.caption,
+      alt: img.src.split("/").pop(),
+      widths: [...[640, 1280].filter((w) => w < meta.width), meta.width],
+      full: (await getImage({ src: meta, width: meta.width, format: "webp" })).src,
+    };
+  })
+);
 const circle =
   "absolute size-7 md:size-8 flex items-center justify-center rounded-full bg-foreground/50 font-mono text-base text-background hover:bg-foreground/70 cursor-pointer";
 const arrow = `${circle} top-1/2 -translate-y-1/2`;
@@ -27,13 +39,15 @@ const counter =
       data-track
       class="flex min-h-48 max-h-[28rem] overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {images.map((img) => (
-        <img
-          src={img.src}
-          alt={img.src.split("/").pop()}
-          loading="lazy"
-          {...size(img.src)}
-          data-caption={img.caption}
+      {slides.map((slide) => (
+        <Image
+          src={slide.meta}
+          alt={slide.alt}
+          widths={slide.widths}
+          sizes="(min-width: 820px) 770px, 100vw"
+          format="webp"
+          data-caption={slide.caption}
+          data-full={slide.full}
           class="w-full shrink-0 snap-center object-contain cursor-zoom-in"
         />
       ))}
@@ -189,7 +203,7 @@ const counter =
     const show = (i: number) => {
       resetZoom();
       zoomed = wrap(i);
-      zoomImg.src = imgs[zoomed].src;
+      zoomImg.src = imgs[zoomed].dataset.full ?? imgs[zoomed].src;
       zoomImg.alt = imgs[zoomed].alt;
       if (zoomCount) zoomCount.textContent = `${zoomed + 1} / ${total}`;
     };
