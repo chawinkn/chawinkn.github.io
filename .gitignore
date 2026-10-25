@@ -1,6 +1,9 @@
 # build output
 dist/
 
+# covers saved by the dev server
+public/covers/
+
 # generated types
 .astro/
 
