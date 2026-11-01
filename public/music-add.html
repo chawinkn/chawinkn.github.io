@@ -21,6 +21,7 @@
         --color-surface-muted: #f4f4f5;
         --color-muted: #71717a;
         --color-border: #e4e4e7;
+        --color-link: #0f5e85;
       }
       html,
       body {
@@ -231,6 +232,38 @@
           </div>
         </section>
 
+        <section class="space-y-3">
+          <h2 class="text-muted">5. cover preview</h2>
+          <p id="cv-status" class="text-muted"></p>
+          <div class="grid gap-8 sm:grid-cols-2">
+            <div class="space-y-2">
+              <h3 class="text-muted">song card</h3>
+              <div class="flex items-center gap-3">
+                <div class="size-16 shrink-0 overflow-hidden bg-surface-muted">
+                  <img id="cv-small" alt="" class="size-full object-cover" hidden />
+                </div>
+                <div class="min-w-0">
+                  <p
+                    id="cv-name"
+                    class="truncate text-sm font-medium text-link underline underline-offset-4"
+                  ></p>
+                  <p id="cv-artist" class="truncate text-foreground/80"></p>
+                  <p id="cv-album" class="truncate text-foreground/50"></p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <h3 class="text-muted">release tile</h3>
+              <div class="w-44">
+                <div class="aspect-square w-full overflow-hidden bg-surface-muted">
+                  <img id="cv-big" alt="" class="size-full object-cover" hidden />
+                </div>
+                <p id="cv-release" class="mt-2 text-sm font-medium"></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <details>
           <summary class="text-muted">output (all drafts)</summary>
           <pre
@@ -304,8 +337,15 @@
       const videoId = (raw) => {
         try {
           const u = new URL(raw.trim());
-          if (u.hostname === "youtu.be") return u.pathname.slice(1) || "";
-          if (u.hostname.endsWith("youtube.com")) return u.searchParams.get("v") || "";
+          const host = u.hostname.replace(/^(www|m|music)\./, "");
+          const id =
+            host === "youtu.be"
+              ? u.pathname.split("/")[1]
+              : host === "youtube.com"
+                ? u.searchParams.get("v") ||
+                  u.pathname.match(/^\/(?:shorts|embed|live|v)\/([^/]+)/)?.[1]
+                : "";
+          if (/^[\w-]{11}$/.test(id || "")) return id;
         } catch {}
         return "";
       };
@@ -466,6 +506,7 @@
               )
               .join(",\n") + ","
           : "";
+        scheduleCover();
         save();
       };
 
@@ -616,6 +657,115 @@
         runSearch();
       };
 
+      const mainArtist = (a) =>
+        a
+          .split(/\s+(?:ft\.?|feat\.?|&)\s+|,/i)[0]
+          .trim()
+          .toLowerCase();
+      const typeSuffix = /\s+-\s+(Single|EP)$/i;
+      const smallCover = (u) =>
+        u.replace("/400x400bb", "/200x200bb").replace("/front-500", "/front-250");
+
+      const lookupCover = async (song, signal) => {
+        const who = mainArtist(song.artist);
+        const term = encodeURIComponent(`${song.name.trim()} ${song.artist.trim()}`);
+        const it = await fetch(`https://itunes.apple.com/search?entity=song&limit=5&term=${term}`, {
+          signal,
+        });
+        const { results = [] } = await it.json();
+        const byArtist = results.filter((r) => r.artistName?.toLowerCase().includes(who));
+        const hit = byArtist.find((r) => r.collectionName === song.album.trim()) ?? byArtist[0];
+        if (hit) {
+          return {
+            cover: hit.artworkUrl100.replace("100x100bb", "400x400bb"),
+            release: hit.collectionName.replace(typeSuffix, ""),
+            source: "itunes",
+          };
+        }
+        const title = (song.album.trim() || song.name.trim()).replace(/"/g, "");
+        const query = encodeURIComponent(
+          `release:"${title}" AND artist:"${who.replace(/"/g, "")}"`
+        );
+        const mb = await fetch(
+          `https://musicbrainz.org/ws/2/release/?fmt=json&limit=5&query=${query}`,
+          { signal }
+        );
+        const { releases = [] } = await mb.json();
+        const rel = releases.find((r) =>
+          r["artist-credit"]?.some((a) => a.name?.toLowerCase().includes(who))
+        );
+        return rel
+          ? {
+              cover: `https://coverartarchive.org/release/${rel.id}/front-500`,
+              release: rel.title,
+              source: "musicbrainz",
+            }
+          : null;
+      };
+
+      const coverCache = new Map();
+      let cv = { key: "", data: null, status: "" };
+      let coverTimer;
+      let coverCtl;
+
+      const paintCover = () => {
+        const song = cur();
+        const album = cv.data?.release || song.album.trim();
+        $("cv-name").textContent = song.name.trim() || "song name";
+        $("cv-artist").textContent = song.artist.trim();
+        $("cv-album").textContent = album;
+        $("cv-release").textContent = album;
+        $("cv-status").textContent = cv.status;
+        [
+          ["cv-small", cv.data && smallCover(cv.data.cover)],
+          ["cv-big", cv.data?.cover],
+        ].forEach(([id, src]) => {
+          const img = $(id);
+          img.hidden = !src;
+          if (src && img.getAttribute("src") !== src) img.src = src;
+          if (!src) img.removeAttribute("src");
+        });
+      };
+
+      const scheduleCover = () => {
+        const song = cur();
+        const key = [song.name, song.artist, song.album].map((x) => x.trim()).join("|");
+        if (key === cv.key) return;
+        clearTimeout(coverTimer);
+        coverCtl?.abort();
+        if (!song.name.trim() || !song.artist.trim()) {
+          cv = { key, data: null, status: "fill name and artist to see the cover" };
+          paintCover();
+          return;
+        }
+        if (coverCache.has(key)) {
+          const data = coverCache.get(key);
+          cv = { key, data, status: data ? `cover from ${data.source}` : "no cover found" };
+          paintCover();
+          return;
+        }
+        cv = { key, data: null, status: "looking up..." };
+        paintCover();
+        coverTimer = setTimeout(async () => {
+          coverCtl = new AbortController();
+          let status;
+          let data = null;
+          try {
+            data = await lookupCover(song, coverCtl.signal);
+            coverCache.set(key, data);
+            status = data
+              ? `cover from ${data.source}`
+              : "no cover found. the site shows a blank tile";
+          } catch (err) {
+            if (err.name === "AbortError") return;
+            status = `lookup failed: ${err.message}`;
+          }
+          if (cv.key !== key) return;
+          cv = { key, data, status };
+          paintCover();
+        }, 600);
+      };
+
       $("yt-search").onclick = () => {
         const q = `${$("artist").value} ${$("name").value}`.trim();
         window.open(
@@ -653,6 +803,11 @@
         URL.revokeObjectURL(a.href);
       };
 
+      $("url").addEventListener("input", () => {
+        const id = videoId($("url").value);
+        const clean = `https://www.youtube.com/watch?v=${id}`;
+        if (id && $("url").value !== clean) $("url").value = clean;
+      });
       FIELDS.forEach((f) => $(f).addEventListener("input", render));
       ["lyrics", "lyrics-view"].forEach((id) =>
         $(id).addEventListener("keydown", (e) => {
