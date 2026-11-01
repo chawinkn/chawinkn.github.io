@@ -36,20 +36,33 @@ async function fetchOk(url: string, init: RequestInit = {}) {
   return null;
 }
 
-async function itunesSearch(term: string, artist: string): Promise<any[]> {
+const normTitle = (title: string) =>
+  title
+    .toLowerCase()
+    .replace(/\s*[(\[](?:feat|ft|with)\b[^)\]]*[)\]]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+
+const sameTrack = (found: string | undefined, wanted: string) => {
+  const a = normTitle(found ?? "");
+  const b = normTitle(wanted);
+  return a === b || a.startsWith(`${b} `);
+};
+
+async function itunesSearch(term: string, song: SongKey): Promise<any[]> {
   const res = await fetchOk(
     `https://itunes.apple.com/search?entity=song&limit=25&term=${encodeURIComponent(term)}`
   );
   if (!res) return [];
   const { results = [] } = await res.json();
-  return results.filter((r: any) => r.artistName?.toLowerCase().includes(artist));
+  const artist = mainArtist(song.artist);
+  return results.filter(
+    (r: any) => r.artistName?.toLowerCase().includes(artist) && sameTrack(r.trackName, song.name)
+  );
 }
 
 async function itunesMeta(song: SongKey): Promise<Meta | null> {
-  const artist = mainArtist(song.artist);
-  const base = `${song.name} ${song.artist}`;
-  let byArtist = song.album ? await itunesSearch(`${base} ${song.album}`, artist) : [];
-  if (!byArtist.length) byArtist = await itunesSearch(base, artist);
+  const byArtist = await itunesSearch(`${song.name} ${song.artist}`, song);
   const hit = byArtist.find((r: any) => r.collectionName === song.album) ?? byArtist[0];
   if (!hit) return null;
   const suffix = hit.collectionName.match(TYPE_SUFFIX)?.[1].toLowerCase();
@@ -81,18 +94,35 @@ let musicBrainzQueue: Promise<unknown> = Promise.resolve();
 
 function musicBrainzMeta(song: SongKey): Promise<Meta | null> {
   const artist = mainArtist(song.artist);
-  const title = (song.album || song.name).replace(/"/g, "");
-  const query = encodeURIComponent(`release:"${title}" AND artist:"${artist.replace(/"/g, "")}"`);
+  const query = encodeURIComponent(
+    `recording:"${song.name.replace(/"/g, "")}" AND artist:"${artist.replace(/"/g, "")}"`
+  );
   const run = musicBrainzQueue.then(async () => {
     const res = await fetchOk(
-      `https://musicbrainz.org/ws/2/release/?fmt=json&limit=5&query=${query}`,
+      `https://musicbrainz.org/ws/2/recording/?fmt=json&limit=10&query=${query}`,
       { headers: { "User-Agent": "chawinkn.com/1.0 (https://chawinkn.com)" } }
     );
     if (!res) return null;
-    const { releases = [] } = await res.json();
-    const matches = releases.filter((r: any) =>
-      r["artist-credit"]?.some((a: any) => a.name?.toLowerCase().includes(artist))
-    );
+    const { recordings = [] } = await res.json();
+    const wantedAlbum = normTitle(song.album ?? "");
+    const wantedName = normTitle(song.name);
+    const score = (r: any) =>
+      (wantedAlbum && normTitle(r.title) === wantedAlbum ? 8 : 0) +
+      (r.status === "Official" ? 4 : 0) +
+      (r["release-group"]?.["secondary-types"]?.length ? 0 : 2) +
+      (r.exact ? 2 : 0) +
+      (r["release-group"]?.["primary-type"] === "Album" ? 1 : 0);
+    const matches = recordings
+      .filter(
+        (rec: any) =>
+          sameTrack(rec.title, song.name) &&
+          rec["artist-credit"]?.some((a: any) => a.name?.toLowerCase().includes(artist))
+      )
+      .flatMap((rec: any) =>
+        (rec.releases ?? []).map((r: any) => ({ ...r, exact: normTitle(rec.title) === wantedName }))
+      )
+      .filter((r: any, i: number, all: any[]) => all.findIndex((x) => x.id === r.id) === i)
+      .sort((a: any, b: any) => score(b) - score(a));
     let release = matches[0];
     let cover: string | null = null;
     for (const candidate of matches.slice(0, 3)) {
