@@ -36,13 +36,20 @@ async function fetchOk(url: string, init: RequestInit = {}) {
   return null;
 }
 
-async function itunesMeta(song: SongKey): Promise<Meta | null> {
-  const term = encodeURIComponent(`${song.name} ${song.artist}`);
-  const res = await fetchOk(`https://itunes.apple.com/search?entity=song&limit=5&term=${term}`);
-  if (!res) return null;
+async function itunesSearch(term: string, artist: string): Promise<any[]> {
+  const res = await fetchOk(
+    `https://itunes.apple.com/search?entity=song&limit=25&term=${encodeURIComponent(term)}`
+  );
+  if (!res) return [];
   const { results = [] } = await res.json();
+  return results.filter((r: any) => r.artistName?.toLowerCase().includes(artist));
+}
+
+async function itunesMeta(song: SongKey): Promise<Meta | null> {
   const artist = mainArtist(song.artist);
-  const byArtist = results.filter((r: any) => r.artistName?.toLowerCase().includes(artist));
+  const base = `${song.name} ${song.artist}`;
+  let byArtist = song.album ? await itunesSearch(`${base} ${song.album}`, artist) : [];
+  if (!byArtist.length) byArtist = await itunesSearch(base, artist);
   const hit = byArtist.find((r: any) => r.collectionName === song.album) ?? byArtist[0];
   if (!hit) return null;
   const suffix = hit.collectionName.match(TYPE_SUFFIX)?.[1].toLowerCase();
@@ -113,7 +120,7 @@ function musicBrainzMeta(song: SongKey): Promise<Meta | null> {
 }
 
 export async function getMeta(song: SongKey): Promise<Meta> {
-  const key = `${song.name}|${song.artist}`;
+  const key = `${song.name}|${song.artist}|${song.album ?? ""}`;
   const cached = cache.get(key);
   if (cached) return cached;
   let meta = await itunesMeta(song).catch(() => null);

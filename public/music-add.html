@@ -668,13 +668,19 @@
 
       const lookupCover = async (song, signal) => {
         const who = mainArtist(song.artist);
-        const term = encodeURIComponent(`${song.name.trim()} ${song.artist.trim()}`);
-        const it = await fetch(`https://itunes.apple.com/search?entity=song&limit=5&term=${term}`, {
-          signal,
-        });
-        const { results = [] } = await it.json();
-        const byArtist = results.filter((r) => r.artistName?.toLowerCase().includes(who));
-        const hit = byArtist.find((r) => r.collectionName === song.album.trim()) ?? byArtist[0];
+        const album = song.album.trim();
+        const base = `${song.name.trim()} ${song.artist.trim()}`;
+        const search = async (term) => {
+          const it = await fetch(
+            `https://itunes.apple.com/search?entity=song&limit=25&term=${encodeURIComponent(term)}`,
+            { signal }
+          );
+          const { results = [] } = await it.json();
+          return results.filter((r) => r.artistName?.toLowerCase().includes(who));
+        };
+        let byArtist = album ? await search(`${base} ${album}`) : [];
+        if (!byArtist.length) byArtist = await search(base);
+        const hit = byArtist.find((r) => r.collectionName === album) ?? byArtist[0];
         if (hit) {
           return {
             cover: hit.artworkUrl100.replace("100x100bb", "400x400bb"),
