@@ -171,7 +171,7 @@ const modeClass =
       const lyricEl = document.getElementById("random-lyric-text");
       const songNameEl = document.getElementById("random-song-name");
       const lyrics = randomSong.favoriteLyrics || [];
-      const randomLyric = lyrics[pick(lyrics.length, 1)];
+      const randomLyric = lyrics[Math.floor(Math.random() * lyrics.length)];
 
       if (songLinkEl && videoId) {
         songLinkEl.href = randomSong.url;
