@@ -18,7 +18,7 @@ const {
 } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL("https://chawinkn.com");
-const canonicalURL = new URL(Astro.url.pathname, siteUrl);
+const canonicalURL = new URL(Astro.url.pathname.replace(/(index)?\.html$/, ""), siteUrl);
 
 const pageTitle = Astro.url.pathname === "/" ? "Chawin Chaisongkram" : `Kanoon | ${title}`;
 const ogImage = new URL(image, siteUrl).toString();
